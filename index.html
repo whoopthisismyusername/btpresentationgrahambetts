@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BT Presentation | Personal by Design</title>
+    <style>
+        /* --- GLOBAL SETTINGS --- */
+        :root {
+            --bt-indigo: #6400AA; 
+            --bt-bg: #F4F4F4;
+            --bt-text: #333333;
+            --bt-white: #FFFFFF;
+        }
+
+        /* Apply border-box globally to prevent padding from expanding dimensions */
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bt-bg);
+            /* Flexbox to center the slide in the viewport */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* FIXED RESOLUTION CONTAINER 
+           This container is locked to 1280x720px.
+           The JavaScript at the bottom scales this entire div to fit the user's screen.
+        */
+        .slide-container {
+            position: relative;
+            width: 1280px;  /* Fixed design width */
+            height: 720px;  /* Fixed design height */
+            background: var(--bt-white);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            flex-shrink: 0; /* Prevent flexbox from squashing it */
+            transform-origin: center center; /* Scale from center */
+        }
+
+        /* Slide Logic */
+        .slide {
+            display: none; 
+            width: 100%; height: 100%;
+            padding: 60px; /* Global Padding */
+            position: absolute; top: 0; left: 0;
+        }
+
+        .slide.active {
+            display: block;
+            animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .slide.active.title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- FRAGMENT / BUILD ANIMATIONS --- */
+        .fragment {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease-out;
+        }
+
+        .fragment.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Branding */
+        .bt-logo {
+            position: absolute;
+            top: 40px; left: 50px;
+            z-index: 10;
+        }
+
+        .bt-logo img {
+            width: 80px; 
+            height: auto;
+            display: block;
+        }
+        
+        /* --- LAYOUT UTILITIES --- */
+        .split-layout {
+            display: grid;
+            height: 100%; width: 100%;
+            gap: 0; 
+            align-items: center;
+        }
+
+        .content-left, .content-right {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            padding: 20px; 
+        }
+
+        /* Navigation Menu */
+        .nav-carousel {
+            position: absolute;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; align-items: center; gap: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 30px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .arrow {
+            cursor: pointer; border: none;
+            background: var(--bt-indigo); color: white;
+            width: 36px; height: 36px; border-radius: 50%;
+            font-size: 18px; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s ease;
+        }
+        .arrow:hover { background: #3c0066; transform: scale(1.05); }
+        
+        .dots { display: flex; gap: 8px; align-items: center; }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #ccc; transition: all 0.3s ease;
+        }
+        .dot.active {
+            background: var(--bt-indigo);
+            width: 30px; border-radius: 10px;
+        }
+        
+        h1, h2, h3, p { margin: 0 0 15px 0; }
+        
+        /* Custom List Styles */
+        .icon-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .icon-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+            color: #333;
+        }
+        .icon-list img {
+            width: 32px;
+            height: 32px;
+            margin-right: 20px;
+        }
+
+        /* --- GRADIENT STYLE --- */
+        .background-gradient {
+            background: linear-gradient(90deg, #F7EFFC 0%, #FFFFFF 50%, #E8F7FA 100%);
+        }
+
+        /* --- SLIDE 3 ANIMATION --- */
+        .animate-text {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: textFadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes textFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- SLIDE 4 COLUMNS --- */
+        /* Hide Logo on Slide 4 */
+        #slide4 .bt-logo {
+            display: none;
+        }
+
+        /* Column Wrapper: Uses flex to make sure rows align */
+        .col-wrapper {
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%;
+            padding: 100px 30px 120px 30px; 
+        }
+
+        .col-content-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; 
+            overflow: hidden; 
+        }
+
+        .col-title {
+            color: var(--bt-indigo);
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: left;
+            min-height: 50px;
+            display: flex;
+            align-items: flex-end;
+        }
+        
+        .comparison-item {
+            flex: 1; 
+            display: flex;
+            align-items: center; 
+            border-bottom: 1px dashed #e0e0e0;
+            padding: 5px 0;
+            font-size: 1rem;
+            line-height: 1.3;
+            color: #444;
+        }
+        .comparison-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Tinted middle column */
+        .col-tint {
+            background-color: #f8f7fa;
+            border-left: 1px solid #eee; 
+            border-right: 1px solid #eee;
+        }
+
+        /* --- SLIDE 5 SPECIFIC STYLES (UPDATED) --- */
+        .slide5-col {
+            justify-content: flex-start !important; /* Override default center */
+        }
+        
+        /* Specific alignment for left column - Increased top padding to 100px (was 40px) */
+        .slide5-col-left {
+            padding-top: 100px !important; 
+        }
+
+        /* Specific alignment for right column - Added 60px padding to lower the box */
+        .slide5-col-right {
+            padding-top: 60px !important;
+        }
+        
+        .slide5-header-group {
+            margin-bottom: 40px;
+            border-bottom: 1px solid #ddd; /* Subtle divider */
+            padding-bottom: 20px;
+            width: 100%;
+        }
+
+        .slide5-main-head {
+            color: var(--bt-indigo);
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            line-height: 1;
+        }
+
+        .slide5-sub-head {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Adjust the right column box to align text with the left */
+        .slide5-box {
+            background-color: #f8f7fa; 
+            border-radius: 20px; 
+            padding: 40px; 
+            height: 100%;
+            /* Box shadow makes it pop slightly */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        }
+
+        /* Clearer list item separation */
+        .slide5-list-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start !important; /* Force override of global .icon-list li centering */
+            margin-bottom: 35px;
+        }
+
+        .slide5-item-head {
+            font-weight: 700;
+            color: var(--bt-indigo);
+            text-align: left; /* Corrected syntax */
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            display: block;
+            border-left: 4px solid var(--bt-indigo);
+            padding-left: 12px;
+            line-height: 1.1;
+        }
+
+        .slide5-item-body {
+            font-size: 1.15rem;
+            line-height: 1.5;
+            color: #444;
+            padding-left: 16px; /* Indent body slightly */
+        }
+
+        /* --- SLIDE 6 SPECIFIC STYLES --- */
+        .course-card {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 10px; 
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 5px;
+        }
+
+        .course-card h3 {
+            margin: 0;
+            color: var(--bt-indigo);
+            font-size: 1.3rem;
+        }
+
+        .course-card p {
+            margin: 5px 0 0 0;
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .qr-mini {
+            width: 120px; 
+            height: 120px;
+            margin-right: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            flex-shrink: 0; 
+        }
+
+        .arrow-connector {
+            color: var(--bt-indigo);
+            font-size: 1.5rem;
+            margin: 0; 
+            width: 100%; 
+            max-width: 600px;
+            padding-left: 60px; 
+            box-sizing: border-box;
+            animation: bounce 2s infinite;
+            line-height: 1.2;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(5px);}
+            60% {transform: translateY(3px);}
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="slide-container" id="mainContainer">
+    
+   <!-- SLIDE 1: Title -->
+    <div class="slide active title-slide" id="slide1" style="background: linear-gradient(135deg, #6400AA 0%, #48007a 100%); color: white;">
+        <div class="bt-logo white-logo">
+            <img src="Images/BT_white_logo_2019.png" alt="BT Logo">
+        </div>
+        
+        <h1 style="font-size: 3rem; margin-bottom: 30px; font-weight: 800; letter-spacing: -1px;">
+            Accelerating  strategy through contemporary design and technology
+        </h1>
+
+        <h2 style="font-size: 2rem; max-width: 900px; font-weight: 300; line-height: 1.5; opacity: 0.9;">
+            Simplifying the complex.<br>              
+            Personalising the experience.<br> 
+            Being brilliant with our execution.
+        </h2>
+    </div>
+
+    <!-- SLIDE 2: Split Layout -->
+    <div class="slide" id="slide2" style="background: white;">
+        <div class="bt-logo">
+            <img src="Images/BT_logo_2019.png" alt="BT Logo">
+        </div>
+
+        <div class="split-layout" style="grid-template-columns: 40% 60%;">
+            
+            <div class="content-left" style="background-color: #ffffff; padding: 60px; align-items: center;">
+                <img src="Images/slide2.svg" 
+                     alt="Add 'slide2.svg' to Images folder" 
+                     style="width: 100%; height: auto; display: block; box-shadow: none; border-radius: 0px; background: #ffffff;">
+            </div>
+
+            <div class="content-right" style="background-color: #ffffff; padding: 10px; padding-left: 80px; align-items: flex-start;">
+                <h2 style="color: #6400AA; font-size: 2.2rem; margin-bottom: 10px;">Contemporary Learning Design</h2>
+                <h3 style="color: #555; font-size: 1.4rem; font-weight: 300; margin-bottom: 40px; margin-top: 0;">Moving from content factory to performance engine</h3>
+                
+                <ul class="icon-list">
+                    <li>
+                        <img src="images/circle.svg" alt="icon">
+                        Human centric design - Performance layered over knowledge
+                    </li>
+                    <li>
+                        <img src="images/data-modelling.svg" alt="icon">
+                        Data provides the blueprints and connects dots
+                    </li>
+                    <li>
+                        <img src="images/agile.svg" alt="icon">
+                        Agile, flexible learning design
+                    </li>                                     
+                    <li>
+                        <img src="images/mastery.svg" alt="icon">
+                        Immersive & Applied Practice
+                    </li>
+                    <li>
+                        <img src="images/user-generated-content.svg" alt="icon">
+                        Socially Powered & Co-created
+                    </li>
+                </ul>
+            </div>
+            
+        </div> 
+    </div>
+
+    <!-- SLIDE 3: 50/50 Split -->
+    <div class="slide background-gradient" id="slide3">
+        <div class="bt-logo">
+            <img src="Images/BT_logo_2019.png" alt="BT Logo">
+        </div>
+        
+        <div class="split-layout" style="grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div class="content-left" style="text-align: left; justify-content: center;">
+                <h2 class="animate-text" style="font-size: 3rem; color: #6400AA; margin-bottom: 20px; line-height: 1.2; animation-delay: 0.2s;">
+                    Digital Learning is no longer the bottleneck.
+                </h2>
+                <h2 class="animate-text" style="font-size: 3rem; color: #333333; margin-bottom: 20px; line-height: 1.2; animation-delay: 1.5s;">
+                    It's the supercharged rocket
+                </h2>
+                <h2 class="animate-text" style="font-size: 3rem; color: #6400AA; margin-bottom: 0px; line-height: 1.2; animation-delay: 3s;">
+                    that powers business performance.
+                </h2>
+            </div>
+
+            <div class="content-right" style="align-items: center; justify-content: center;">
+                <img src="Images/Untitled-720p-251214.gif" 
+                     alt="Add rocket.gif to Images folder" 
+                     style="width: 100%; height: auto; max-width: 500px; border-radius: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.1);">
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: 3-Column Split (WITH BUILD STEPS) -->
+    <div class="slide" id="slide4" style="padding: 0; background: white;">
+        <div class="bt-logo">
+            <img src="Images/BT_logo_2019.png" alt="BT Logo">
+        </div>
+
+        <div class="split-layout" style="grid-template-columns: 1fr 1fr 1fr;">
+            
+            <div class="col-wrapper" style="background-color: #ffffff;">
+                <h3 class="col-title">What Doesn't Work<br><span style="font-size: 1rem; font-weight: 400; color: #888;">(The Old Way)</span></h3>
+                <div class="col-content-container">
+                    <div class="comparison-item fragment step-1">Knowledge-heavy, long-form courses</div>
+                    <div class="comparison-item fragment step-2">Experience ends at the 'tell'</div>
+                    <div class="comparison-item fragment step-3">Vanity Metrics: Focusing on completion & ratings</div>
+                    <div class="comparison-item fragment step-4">Static tools, formats & timescales</div>
+                </div>
+            </div>
+
+            <div class="col-wrapper col-tint">
+                <h3 class="col-title">What Works<br><span style="font-size: 1rem; font-weight: 400; color: #888;">(The Contemporary Way)</span></h3>
+                <div class="col-content-container">
+                     <div class="comparison-item fragment step-1">Flexible micro-learning & responsive content</div>
+                     <div class="comparison-item fragment step-2">Safe-to-fail practice environments</div>
+                     <div class="comparison-item fragment step-3">Predictive data modeling & skills gap analysis</div>
+                     <div class="comparison-item fragment step-4">Agile, tech-driven modern experiences</div>
+                </div>
+            </div>
+
+            <div class="col-wrapper" style="background-color: #ffffff;">
+                <h3 class="col-title">How It Accelerates<br><span style="font-size: 1rem; font-weight: 400; color: #888;">(Strategy Impact)</span></h3>
+                <div class="col-content-container">
+                     <div class="comparison-item fragment step-1">Increased Adoption: Fits the flow of work</div>
+                     <div class="comparison-item fragment step-2">Deeper learning & higher engagement</div>
+                     <div class="comparison-item fragment step-3">Commercially focused L&D narrative</div>
+                     <div class="comparison-item fragment step-4">Wider offering, tangible business impact</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SLIDE 5: The Role of Technology (WITH BUILD STEP) -->
+    <div class="slide" id="slide5" style="background: white; padding: 60px 20px;">
+        <div class="bt-logo">
+            <img src="Images/BT_logo_2019.png" alt="BT Logo">
+        </div>
+        
+        <div class="split-layout" style="grid-template-columns: 1fr 1fr; gap: 40px; padding: 0 20px;">
+            
+            <!-- LEFT: The Enabler (Always Visible) -->
+            <div class="content-left slide5-col slide5-col-left">
+                <div class="slide5-header-group">
+                    <h2 class="slide5-main-head">The Enabler</h2>
+                   
+                </div>
+
+                <ul class="icon-list">
+                    <li class="slide5-list-item">
+                        <span class="slide5-item-head">Remapped Landscape</span> 
+                        <span class="slide5-item-body">Modern tools replace legacy systems, allowing us to create flexible, responsive learning in days rather than weeks.</span>
+                    </li>
+                    <li class="slide5-list-item">
+                        <span class="slide5-item-head">Democratisation</span> 
+                        <span class="slide5-item-body">"Complex has become accessible." You no longer need to be a coder to build, allowing SMEs to contribute directly.</span>
+                    </li>
+                    <li class="slide5-list-item">
+                        <span class="slide5-item-head">Human-Centric</span> 
+                        <span class="slide5-item-body">Matches "learned life behaviours" by delivering learning in the moment of need, rather than via rigid courses.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- RIGHT: The Accelerator (Build Step 1) -->
+            <!-- Added 'fragment step-1' to the column wrapper -->
+            <div class="content-right slide5-col slide5-col-right fragment step-1" style="padding: 0;"> 
+                <div class="slide5-box">
+                    <div class="slide5-header-group" style="border-color: #e0e0e0;">
+                        <h2 class="slide5-main-head">The Accelerator</h2>
+                        
+                    </div>
+
+                    <ul class="icon-list">
+                        <li class="slide5-list-item">
+                            <span class="slide5-item-head">Agile Accelerator</span> 
+                            <span class="slide5-item-body">AI allows design to happen quickly and updates content instantly, ensuring the workforce adapts at the pace the world expects.</span>
+                        </li>
+                        <li class="slide5-list-item">
+                            <span class="slide5-item-head">Precision Strategy</span> 
+                            <span class="slide5-item-body">Moves beyond vanity metrics to track tangible performance data (e.g. sales conversion), proving material business impact.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: The Caveats -->
+    <div class="slide" id="slide6" style="background: linear-gradient(135deg, #6400AA 0%, #48007a 100%); color: white;">
+        <div class="bt-logo white-logo">
+            <img src="Images/BT_white_logo_2019.png" alt="BT Logo">
+        </div>
+        
+        <div class="split-layout" style="grid-template-columns: 1fr 1fr; gap: 80px; padding: 0 60px;">
+            
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <h2 style="font-size: 3rem; margin-bottom: 20px; font-weight: 800;">The Caveats</h2>
+                <p style="font-size: 1.5rem; opacity: 0.9; line-height: 1.4;">
+                    Technology enables and accelerates, but only if we bring our people along on the journey.
+                </p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; justify-content: center; gap: 40px;">
+                
+                <div style="background: linear-gradient(90deg, #F7EFFC 0%, #FFFFFF 50%, #E8F7FA 100%); padding: 30px; border-radius: 15px; color: #6600aa;">
+                    <h3 style="font-size: 1.6rem; margin-bottom: 10px;">Closing the Education Gap</h3>
+                    <p style="font-size: 1.1rem; line-height: 1.5;">
+                        We must move beyond "Google Search" style inputs.
+                    </p>
+                </div>
+
+                <div style="background: linear-gradient(90deg, #F7EFFC 0%, #FFFFFF 50%, #E8F7FA 100%); padding: 30px; border-radius: 15px; color: #6600aa;">
+                    <h3 style="font-size: 1.6rem; margin-bottom: 10px;">Responsible & Ethical AI</h3>
+                    <p style="font-size: 1.1rem; line-height: 1.5;">
+                        <strong>Human-in-the-loop is non-negotiable.</strong>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: Questions & Stacked Modules (Renumbered) -->
+    <div class="slide" id="slide7" style="background: white;">
+        <div style="display: flex; height: 100%; width: 100%; align-items: center; gap: 40px;">
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; height: 100%; padding-left: 0;">
+                <h2 style="color: #6400AA; font-size: 2.5rem; margin-bottom: 20px; margin-top: 0;">Questions?</h2>
+                
+                <div class="course-card">
+                    <img src="Images/QR1.png" alt="QR" class="qr-mini">
+                    <div>
+                        <h3>Contemporary Learning Design Foundations</h3>
+                    </div>
+                </div>
+                <div class="arrow-connector">↓</div>
+
+                <div class="course-card">
+                    <img src="Images/QR2.png" alt="QR" class="qr-mini">
+                    <div>
+                        <h3>Technology as a Learning Accelerator</h3>
+                    </div>
+                </div>
+                <div class="arrow-connector">↓</div>
+
+                <div class="course-card">
+                    <img src="Images/QR3.png" alt="QR" class="qr-mini">
+                    <div>
+                        <h3>Proving Learning Value & Performance</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="width: 35%; height: 100%; display: flex; align-items: center; justify-content: center; padding-right: 40px;">
+                <iframe src="https://app.7taps.com/PW8Q5TRb7wtp" 
+                        title="Main Course Demo" 
+                        width="100%" height="90%" 
+                        style="border-radius: 20px; border: 1px solid #eee; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: white;">
+                </iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="nav-carousel">
+        <button class="arrow" onclick="goPrev()">&#8592;</button>
+        <div class="dots" id="dotContainer"></div>
+        <button class="arrow" onclick="goNext()">&#8594;</button>
+    </div>
+
+</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 7; 
+
+    // SCALING LOGIC
+    function scaleSlides() {
+        const container = document.getElementById('mainContainer');
+        const targetWidth = 1280;
+        const targetHeight = 720;
+        
+        // Available space
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        
+        // Determine scale ratio to fit window
+        const scale = Math.min(w / targetWidth, h / targetHeight);
+        
+        // Apply scale
+        container.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener('resize', scaleSlides);
+    window.addEventListener('load', scaleSlides);
+    scaleSlides();
+
+    /* --- SLIDESHOW LOGIC --- */
+    function initDots() {
+        const container = document.getElementById('dotContainer');
+        container.innerHTML = ''; 
+        for (let i = 1; i <= totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === 1 ? 'active' : ''}`;
+            dot.id = `dot${i}`;
+            container.appendChild(dot);
+        }
+    }
+
+    function resetSlide(slideIndex) {
+        // When entering a slide, hide all fragments so they can be played again
+        const slide = document.getElementById(`slide${slideIndex}`);
+        const fragments = slide.querySelectorAll('.fragment');
+        fragments.forEach(f => f.classList.remove('visible'));
+    }
+
+    function updateActiveClasses(newIndex) {
+        // Toggle slide active class
+        document.getElementById(`slide${currentSlide}`).classList.remove('active');
+        document.getElementById(`dot${currentSlide}`).classList.remove('active');
+        
+        document.getElementById(`slide${newIndex}`).classList.add('active');
+        document.getElementById(`dot${newIndex}`).classList.add('active');
+        
+        currentSlide = newIndex;
+        
+        // Reset builds on the new slide
+        resetSlide(currentSlide);
+    }
+
+    function goNext() {
+        const activeSlide = document.getElementById(`slide${currentSlide}`);
+        
+        // Check for hidden fragments on current slide
+        const hiddenFragments = activeSlide.querySelectorAll('.fragment:not(.visible)');
+        
+        if (hiddenFragments.length > 0) {
+            // Find the lowest step number among hidden fragments
+            let minStep = Infinity;
+            hiddenFragments.forEach(el => {
+                // Extract step number from class "step-N"
+                const matches = el.className.match(/step-(\d+)/);
+                if (matches) {
+                    const stepNum = parseInt(matches[1]);
+                    if (stepNum < minStep) minStep = stepNum;
+                }
+            });
+
+            // If we found a step, reveal all elements with that step
+            if (minStep !== Infinity) {
+                const stepItems = activeSlide.querySelectorAll(`.step-${minStep}`);
+                stepItems.forEach(el => el.classList.add('visible'));
+                return; // Stop here, don't change slide
+            }
+        }
+
+        // If no hidden fragments, go to next slide
+        if (currentSlide < totalSlides) {
+            updateActiveClasses(currentSlide + 1);
+        }
+    }
+
+    function goPrev() {
+        if (currentSlide > 1) {
+            updateActiveClasses(currentSlide - 1);
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "ArrowRight") goNext();
+        if (e.key === "ArrowLeft") goPrev();
+    });
+
+    initDots();
+</script>
+
+</body>
+</html>
